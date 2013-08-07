@@ -5,10 +5,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "http-req", "http-req.vcxpro
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		bin|Win32 = bin|Win32
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FBE0A7B0-03FC-4677-B0C2-6D45064952D4}.bin|Win32.ActiveCfg = bin|Win32
+		{FBE0A7B0-03FC-4677-B0C2-6D45064952D4}.bin|Win32.Build.0 = bin|Win32
 		{FBE0A7B0-03FC-4677-B0C2-6D45064952D4}.Debug|Win32.ActiveCfg = Debug|Win32
 		{FBE0A7B0-03FC-4677-B0C2-6D45064952D4}.Debug|Win32.Build.0 = Debug|Win32
 		{FBE0A7B0-03FC-4677-B0C2-6D45064952D4}.Release|Win32.ActiveCfg = Release|Win32
