@@ -16,9 +16,7 @@
 #include "WS2tcpip.h"
 #include "Windows.h"
 
-/************************************************/
-/* Defined Networking Constants					*/
-/************************************************/
+/** Networking Constants */
 #define WINSOCK_VER_2	2
 #define REQ_WINSOCK_VER 2
 #define	FTP_DATA_PORT	20
@@ -29,24 +27,7 @@
 #define MAX_HEADER_SIZE 8190
 #define	MAX_ERRMSG_SIZE	1024
 
-/************************************************/
-/* Winsock Macros								*/
-/************************************************/
-/** The following macro is useful if a program is built and ran without
-	a way to cleanup the winsock api, this will cleanup on next run */
-#define WSA_CLEAN_ONLY \
-	WSACleanup(); \
-	return 0;
-
-/** Exception-safe Winsock Cleanup */
-#define WSA_CLEANUP() \
-	if (WSACleanup() != 0) \
-		throw WinsockException("WSACleanup()");
-
-
-/************************************************/
-/* Winsock Exception Classes					*/
-/************************************************/
+/** Exception Classes */
 class WinsockException	// all classes that inherit from WinsockException
 {	private:			// call WSAGetLastError so require Windows
 		static int errCode;  
@@ -112,11 +93,6 @@ class BindException : public SocketException
 		  BindException(char *failMsg) : SocketException(failMsg) {}
 };
 
-
-/************************************************/
-/* STD Network Exception Classes				*/
-/************************************************/
-
 /** Any problems that do not cause an error code to be returned
 	by WSAGetLastError in Winsock applications should use exceptions
 	extended from NetworkException */
@@ -131,11 +107,8 @@ class ReqVersionException : public NetworkException
 		  ReqVersionException(const char *whatMsg) : NetworkException(whatMsg) {}
 };
 
-/************************************************/
-/* FUNCTIONS	       							*/
-/************************************************/
 
-/** Initialize WinSock */
+/** Winsock Utility Functions */
 WSADATA init_winsock(bool verbose = false)
 {
 	WSADATA wsaData;
@@ -149,6 +122,15 @@ WSADATA init_winsock(bool verbose = false)
 			 << static_cast<int>(LOBYTE(wsaData.wVersion)) << " initialized..."
 		     << std::endl;
 	return wsaData;
+}
+
+void cleanup_winsock(bool verbose = false) {
+	try {
+		if (WSACleanup() != 0) throw WinsockException("WSACleanup failed");
+	} catch (WinsockException e) {
+		std::cout << "Error: " << e.errorMsg() << std::endl;
+	}
+	std::cout << "Log: Winsock cleaned up" << std::endl;
 }
 
 /** Convenience function for creating a TCP socket */
@@ -390,22 +372,21 @@ char *ip6_string(const char hostname[])
 
 
 void send_http(SOCKET s, const char *hostname, const char *method, const char *request = NULL,
-	const char *useragent = "cgWinsock App", const char *from = NULL)
-{
+	const char *useragent = "cgWinsock App", const char *from = NULL) {
+	
 	std::stringstream reqStream;
-
 	const char *CRLF = "\r\n";
 
 	if (request != NULL)
 		reqStream << method << " " << request << " HTTP/1.1" << CRLF;
 	else
 		reqStream << method << " HTTP/1.1" << CRLF;
+
 	reqStream << "Host: " << hostname << CRLF;
 	reqStream << "User-agent: " << useragent << CRLF;
 	if (from != NULL) {reqStream << "From: " << from << CRLF;}
 	reqStream << "Connection: close" << CRLF << CRLF;
 	std::string save = reqStream.str();
-	const char *test = save.c_str();
 	int size = save.size();
 
 	if(send(s, reqStream.str().c_str(), reqStream.str().size(), 0)
@@ -497,24 +478,33 @@ int http_req(const char *hostname, const char *method,
 				char ip[INET6_ADDRSTRLEN];
 				inet_ntop(ptr->ai_family, 
 					cast_in_addr(ptr->ai_addr), ip, sizeof(ip));
-				std::cout << "Log: Connection to " << hostname 
-					<< " on address " << ip << " established" 
-					<< std::endl << std::endl;
+
+				if (verbose)
+					std::cout << "Log: Connection to " << hostname 
+						<< " on address " << ip << " established" 
+						<< std::endl << std::endl;
 
 				/** Send the head request and receive the response */
 				send_http(s, hostname, method, request, 
 					"cgWinsock", "CoryG89@gmail.com");
 				totalRecvd = recv_data(s, resp); 
 
-				if (verbose) { 
+				if (verbose)
 					std::cout << "Log: Dumping http response...\n\n"
 						<< resp << "\nLog: Total number of bytes received: "
 						<< totalRecvd << std::endl << std::endl;
-				}
 				
 				/** Output size of data received */
-				if (closesocket(s) == -1)
-					throw SocketException("Error: unable to close socket");
+				try {
+					if (closesocket(s) == -1)
+						throw SocketException("Error: Unable to close socket");
+				} catch (SocketException e) {
+					std::cout << "Error: " << e.errorMsg() << std::endl;
+				}
+				
+				if (verbose)
+					std::cout << "Log: Socket closed" << std::endl;
+				
 				break;
 			}
 	}

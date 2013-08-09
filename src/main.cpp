@@ -8,7 +8,6 @@ using namespace std;
 #define PAUSE() cout << "\nPress enter to continue..\n"; cin.get();
 #define EXIT(val) PAUSE(); return val;
 
-
 int main(int argc, char * argv[])
 {
 	char * host = NULL;
@@ -18,9 +17,6 @@ int main(int argc, char * argv[])
 	if (argc < 2) {
 		cout << "\nUsage:\n\n\thttp-req host_name [req_path] [req_method]\n\n";
 	} else  {
-		/** The host to send the request is the first and only required argument
-			if the following two arguments are omitted, the given host is sent
-			an HTTP GET request for / the root path ( / ) **/
 		host = argv[1];
 
 		if (argc > 2) {
@@ -35,14 +31,12 @@ int main(int argc, char * argv[])
 			method = "GET";
 		}
 
+		cout << endl;
 
 		WSADATA wsaData = init_winsock(true);
-
 		char *http_res = NULL;
-		http_req(host, method, path, http_res);
-
-		cout << http_res << endl;
-		WSA_CLEANUP();
+		int numBytesRecvd = http_req(host, method, path, http_res, true);
+		cleanup_winsock(true);
 	}
 	EXIT(0);
 }
