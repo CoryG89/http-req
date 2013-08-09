@@ -5,10 +5,9 @@
 
 using namespace std;
 
-#define PAUSE() \
-	cout << endl << "Press enter to continue.."; \
-	cin.get(); \
-	cout << endl;
+#define PAUSE() cout << "\nPress enter to continue..\n"; cin.get();
+#define EXIT(val) PAUSE(); return val;
+
 
 int main(int argc, char * argv[])
 {
@@ -17,23 +16,15 @@ int main(int argc, char * argv[])
 	char * method = NULL;
 
 	if (argc < 2) {
-		cout << "Usage:\n\n\t";
-		cout << "http-req host_name [req_path] [req_method]" << endl << endl;
+		cout << "\nUsage:\n\n\thttp-req host_name [req_path] [req_method]\n\n";
 	} else  {
+		/** The host to send the request is the first and only required argument
+			if the following two arguments are omitted, the given host is sent
+			an HTTP GET request for / the root path ( / ) **/
 		host = argv[1];
+
 		if (argc > 2) {
-			int pathLen = strlen(argv[2]);
-			cout << endl << "pathLen: " << pathLen << endl;
-		
-			path = new char[pathLen + 2];
-			path[0] = '/';
-
-			int i;
-			for (i = 1; i <= pathLen; i++) 
-				path[i] = argv[2][i-1];
-
-			path[pathLen + 1] = 0;
-
+			path = argv[2];
 		} else {
 			path = "/";
 		}
@@ -43,16 +34,15 @@ int main(int argc, char * argv[])
 		} else {
 			method = "GET";
 		}
+
+
+		WSADATA wsaData = init_winsock(true);
+
+		char *http_res = NULL;
+		http_req(host, method, path, http_res);
+
+		cout << http_res << endl;
+		WSA_CLEANUP();
 	}
-
-	WSADATA wsaData = init_winsock(true);
-
-	char *http_res = NULL;
-	http_req(host, method, path, http_res);
-
-	cout << http_res << endl;
-
-	WSA_CLEANUP();
-	PAUSE();
-	return 0;
+	EXIT(0);
 }
